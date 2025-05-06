@@ -1,0 +1,283 @@
+stages:
+  - apply_dev
+  - configure_dev
+  - check_approval
+  - apply_prod
+  - configure_prod
+  - destroy
+
+
+image:
+  name: alpine/terragrunt:tf1.9.4
+
+
+variables:
+  WORK_DIR: $CI_PROJECT_DIR
+  YC_SERVICE_ACCOUNT_KEY_FILE: /tmp/sa-key.json
+  TF_PLUGIN_CACHE_DIR: $CI_PROJECT_DIR/plugin-cache
+  TERRAGRUNT_PARALLELISM: 7
+
+
+cache:
+  key: plugin-cache
+  paths:
+    - plugin-cache/
+
+
+.check_approval:
+  script:
+    - echo "➖➖➖➖➖➖➖➖➖➖ MERGE REQUEST CHECK APPROVAL... ➖➖➖➖➖➖➖➖➖➖" > /dev/null
+    # Задание переменных
+    - |
+
+      # VARIABLES_FROM_GITLAB_PROJECT
+      APPROVERS_ARRAY=(${APPROVERS//,/ })
+      GITLAB_TOKEN="${GITLAB_API_BOT}"
+
+      # PREDEFINED_VARIABLES_OF_PIPELINE
+      API_URL="${CI_API_V4_URL}"
+      PROJECT_ID="${CI_PROJECT_ID}"
+      COMMIT_SHA="${CI_COMMIT_SHA}"
+      TARGET_BRANCH="${CI_MERGE_REQUEST_TARGET_BRANCH_NAME}"
+      
+
+    # Получаем информацию о Merge Request
+    - |
+      MR_INFO=$(curl --silent --request GET \
+        --header "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+        "${API_URL}/projects/${PROJECT_ID}/merge_requests" \
+        | jq -c ".[] | select(.sha == \"${COMMIT_SHA}\" and .state == \"opened\" and .target_branch == \"${TARGET_BRANCH}\")")
+    
+    # Проверка, что MR найден.
+    - |
+      if [ -z "$MR_INFO" ]; then
+        echo "➖➖➖ Merge Request not found!"
+        exit 1
+      fi
+
+    # Извлекаем ID Merge Request
+    - MR_ID=$(echo $MR_INFO | jq '.iid')
+    
+    # Получаем информацию об одобрениях для Merge Request
+    - |
+      APPROVALS=$(curl --silent --request GET \
+        --header "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+        "${API_URL}/projects/${PROJECT_ID}/merge_requests/${MR_ID}/approvals")
+    
+    # Проверка на наличие одобрений от авторов
+    - |
+      APPROVED=false
+      MAX_RETRIES=7  # Максимальное количество попыток
+      RETRY_DELAY=30  # Задержка между попытками в секундах
+
+      for ((i=1; i<=MAX_RETRIES; i++)); do
+        # Список авторов, которые ещё не подтвердили
+        NOT_APPROVED=()
+
+        # Проверяем всех авторов
+        for AUTHOR in "${APPROVERS_ARRAY[@]}"; do
+          if ! echo "${APPROVALS}" | jq -e ".approved_by[] | select(.user.username == \"${AUTHOR}\")" > /dev/null; then
+            NOT_APPROVED+=("${AUTHOR}")
+          fi
+        done
+
+        # Если все одобрили, выходим
+        if [ ${#NOT_APPROVED[@]} -eq 0 ]; then
+          APPROVED=true
+          break
+        fi
+
+        # Если одобрение не получено, выводим недостающих
+        echo "➖➖➖ Please get approval from the following users: *${NOT_APPROVED[@]}*. Retrying in ${RETRY_DELAY} seconds... (Attempt ${i}/${MAX_RETRIES})"
+        sleep ${RETRY_DELAY}
+        
+        # Получаем обновлённые данные об одобрениях
+        APPROVALS=$(curl --silent --request GET \
+          --header "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+          "${API_URL}/projects/${PROJECT_ID}/merge_requests/${MR_ID}/approvals")
+      done
+    
+    # Выводим результат
+    - |
+      if [ "${APPROVED}" = true ]; then
+        echo "➖➖➖ Great job! Your merge request has been approved!"
+      else
+        echo "➖➖➖ Error!! Please get approval from following users: *${APPROVERS}* to proceed. Then restart job"
+        exit 1; fi
+
+      echo "➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖➖" > /dev/null
+    
+
+
+
+.terragrunt_config:
+  before_script:
+    # Install programms
+    # - |
+    #   if command -v apt &> /dev/null; then
+    #       apt update && apt install -y jq ansible curl sed grep openssh coreutils
+    #   elif command -v apk &> /dev/null; then
+    #       apk --no-cache add jq ansible curl sed grep openssh coreutils
+    #   else
+    #       echo "➖➖ Поддерживаемый пакетный менеджер не найден."
+    #       exit 1; fi
+
+    - mkdir -p $TF_PLUGIN_CACHE_DIR
+    - cd $WORK_DIR && pwd
+
+    # GET AWS_KEYS FOR AUTH IN YC-REMOTE-BACKEND
+    - cp "${YC_BACKEND_CREDENTIALS_FILE}" .env
+    - set -a; source .env; set +a
+    # - export $(grep -v '^#' .env | xargs)
+
+
+    # GET KEY FOR AUTH IN YC-SERVICE-ACCOUNT
+    - cp "${YC_TF_SERVICE_ACCOUNT_KEY_FILE_JSON}" /tmp/sa-key.json
+
+
+    # CONFIGURE TERRAFORM TO USE YANDEX MIRROR
+    - |
+      cat <<EOF > ~/.terraformrc
+      provider_installation {
+        network_mirror {
+          url = "https://terraform-mirror.yandexcloud.net/"
+          include = ["registry.terraform.io/*/*"]
+        }
+        direct {
+          exclude = ["registry.terraform.io/*/*"]
+        }
+      }
+      EOF
+  script:
+    - terragrunt hclfmt
+    - terragrunt hclfmt --terragrunt-check
+    - terragrunt run-all providers lock -platform=linux_amd64
+    - terragrunt run-all validate
+
+
+
+
+.ansible_config:
+  before_script:
+    - |
+
+      # INSTALL PROGRAMMS
+      if command -v apt &> /dev/null; then
+          apt update && apt install -y jq ansible curl sed grep openssh coreutils
+      elif command -v apk &> /dev/null; then
+          apk --no-cache add jq ansible curl sed grep openssh coreutils
+      else
+          echo "➖➖➖ Поддерживаемый пакетный менеджер не найден."
+          exit 1; fi
+
+  script:
+    - ansible-playbook --syntax-check ${WORK_DIR}/${ENV}/vpc/runner/ansible/playbook.yml
+
+    # ANSIBLE_SSH_KEY
+    - mkdir -p ${WORK_DIR}/artifacts
+    - echo "${SSH_PRIVATE_KEY_FILE}" | base64 --decode > ${WORK_DIR}/artifacts/ssh-key
+    - chmod 600 ${WORK_DIR}/artifacts/ssh-key
+    - eval $(ssh-agent -s) && ssh-add ${WORK_DIR}/artifacts/ssh-key 
+
+    # ENV VARS FOR TELEGRAM BOT
+    - cp "${TELEGRAM_ENV_FILE}" .env
+    - set -a; source .env; set +a
+    # - export $(grep -v '^#' .env | xargs)
+
+
+    # CHECK
+    - ssh-add -l
+    - cat ${WORK_DIR}/artifacts/ssh-key | head -c 3
+    - ls -la ${WORK_DIR}/artifacts
+    - ssh -V
+
+
+
+
+.apply_template:
+  before_script:
+    - !reference [.terragrunt_config, before_script]
+  script:
+    - !reference [.terragrunt_config, script]
+    - cd $WORK_DIR/${ENV} && terragrunt run-all apply --terragrunt-non-interactive
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+
+
+
+.configure_template:
+  before_script:
+    - !reference [.ansible_config, before_script]
+  script:
+    - !reference [.ansible_config, script]
+    - cd ${WORK_DIR}/${ENV}/vpc/telegram_bot/ansible && ansible-playbook playbook.yml
+  dependencies:
+    - apply_${ENV}
+  needs:
+    - apply_${ENV}
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+
+
+
+apply_dev:
+  stage: apply_dev
+  extends: .apply_template
+  variables:
+    ENV: dev
+  # allow_failure: true
+  
+
+
+configure_dev:  
+  stage: configure_dev
+  extends: .configure_template
+  variables:
+    ENV: dev
+  # allow_failure: true
+  
+
+check_approval:
+  stage: check_approval
+  before_script:
+    - !reference [.terragrunt_config, before_script]
+  script:
+    - !reference [.check_approval, script]
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
+
+
+
+apply_prod:
+  stage: apply_prod
+  extends: .apply_template
+  variables:
+    ENV: prod
+
+
+
+
+configure_prod:
+  stage: configure_prod
+  extends: .configure_template
+  variables:
+    ENV: prod
+  allow_failure: true
+  
+  
+
+  
+destroy:
+  stage: destroy
+  before_script:
+    - !reference [.terragrunt_config, before_script]
+  script:
+    # Separated because of errors
+    - cd ${WORK_DIR}/dev  && terragrunt run-all destroy --terragrunt-non-interactive
+    - cd ${WORK_DIR}/prod && terragrunt run-all destroy --terragrunt-non-interactive
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  when: manual
+  allow_failure: false  # Makes the stage not dependent on others' success/failure

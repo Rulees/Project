@@ -1,0 +1,114 @@
+---
+- name: Deploy telegram_bot
+  hosts: telegrambot_totembot_dev
+  become: true
+  tasks:
+
+    - name: Pull repository code
+      block:
+          - name: Copy private-ssh-key from local to server for pulling repository 
+            copy:
+              src: /root/.ssh/YC
+              dest: /root/.ssh/YC
+              mode: '0600'
+
+          - name: Pull latest code from Git repository
+            git:
+              repo: 'git@github.com:Rulees/DildaKot.git'
+              dest: /home/melnikov/DildaKot
+              version: main
+              force: yes
+              accept_hostkey: yes 
+              key_file: /root/.ssh/YC
+            notify:
+              - Restart telegram bot
+
+          - name: Remove temporary private key
+            file:
+              path: /root/.ssh/YC
+              state: absent
+
+          - name: Set correct ownership for project files
+            file:
+              path: /home/melnikov/DildaKot
+              owner: melnikov
+              group: melnikov
+              recurse: yes
+
+
+    - name: Copy .env to remote server
+      copy:
+        src: "./files/.env"
+        dest: "/home/melnikov/DildaKot/Project_code/.env"
+        mode: '0644'
+
+    - name: Prepare python environment
+      block:
+            - name: Add deadsnakes PPA repository (for python3.10)
+              apt_repository:
+                repo: ppa:deadsnakes/ppa
+                state: present
+                update_cache: yes
+
+            - name: Install python3.10 and venv
+              apt:
+                name:
+                  - python3.10
+                  - python3.10-venv
+                  - python3.10-dev
+                state: present
+                update_cache: yes
+            
+            - name: Remove old venv if exists
+              file:
+                path: /home/melnikov/DildaKot/venv
+                state: absent
+
+
+            - name: Create virtual environment using python3.10
+              command:
+                cmd: python3.10 -m venv /home/melnikov/DildaKot/venv
+                creates: /home/melnikov/DildaKot/venv/bin/activate
+
+            - name: Install python dependencies inside venv
+              pip:
+                requirements: /home/melnikov/DildaKot/Project_code/requirements.txt
+                virtualenv: /home/melnikov/DildaKot/venv
+                virtualenv_python: python3.10
+
+
+    - name: Create service "telegram-bot"
+      copy:
+        dest: /etc/systemd/system/telegram-bot.service
+        content: |
+                [Unit]
+                Description=Telegram Bot
+                After=network.target
+
+                [Service]
+                ExecStart=/home/melnikov/DildaKot/venv/bin/python /home/melnikov/DildaKot/Project_code/del_blyad.py
+                Restart=always
+                User=melnikov
+                WorkingDirectory=/home/melnikov/DildaKot/Project_code
+
+                [Install]
+                WantedBy=multi-user.target
+
+
+    - name: Restart + Reload
+      block:
+            - name: Reload systemd to see new-created service
+              systemd:
+                daemon_reload: yes
+
+            - name: Enable and start telegram bot
+              systemd:
+                name: telegram-bot
+                enabled: yes
+                state: started
+
+  handlers:
+  - name: Restart telegram bot
+    systemd:
+      name: telegram-bot
+      state: restarted

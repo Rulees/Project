@@ -1,0 +1,80 @@
+#cloud-config
+datasource:
+  Ec2:
+    strict_id: false                   # Disables strict ID matching for the EC2 datasource (AWS-specific)
+
+ssh_pwauth: no                         # Disables password-based SSH authentication (only key-based auth allowed)
+package_update: true
+package_upgrade: false
+
+users:
+  - name: ${username}
+    sudo: ALL=(ALL) NOPASSWD:ALL       # Allow use sudo command without entring password
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ${ssh_key}
+    
+
+  - name: serial
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    lock_passwd: false
+    system: false                      # Prevent creating system user instead of normal user
+
+chpasswd:
+  expire: false
+  list: |
+    serial:$6$OUpRqI9mcIkKEaX1$5R5ooi.kTLchhDkZf4S1AmaMKmAoAGYCRajYjkvJtU5o43nl1jdiICRMpzrQAqTyloulWmgaUn3YNlGIxRC6g/
+
+write_files:                           # Allow password for serial-console user
+  - path: /etc/ssh/sshd_config
+    content: |
+      PasswordAuthentication no
+      PermitRootLogin no
+      PermitEmptyPasswords no
+      Match User serial
+                PasswordAuthentication yes
+                PubkeyAuthentication no
+      Match User ${username}
+                PasswordAuthentication no
+                PubkeyAuthentication yes
+    append: true
+
+packages:
+  - lnav
+  - htop
+  - nano
+  - tree
+
+runcmd:
+# APPLY ALIASES
+  - touch /home/${username}/.bash_aliases
+  - touch /root/.bash_aliases
+  # c=clear
+  - |
+        echo "alias c='clear'" >> /root/.bashrc
+        echo "alias с='clear'" >> /root/.bashrc
+
+        echo "alias c='clear'" >> /home/${username}/.bashrc
+        echo "alias с='clear'" >> /home/${username}/.bashrc
+
+        echo "alias c='clear'" >> /etc/profile.d/custom_aliases.sh
+        echo "alias с='clear'" >> /etc/profile.d/custom_aliases.sh
+
+        echo "alias c='clear'" >> /root/.bash_aliases
+        echo "alias с='clear'" >> /root/.bash_aliases
+
+        echo "alias c='clear'" >> /home/${username}/.bash_aliases
+        echo "alias с='clear'" >> /home/${username}/.bash_aliases   
+  # k=kubectl
+  - |
+        echo "alias k='kubectl'" >> /root/.bashrc
+        echo "alias k='kubectl'" >> /home/${username}/.bashrc
+        echo "alias k='kubectl'" >> /etc/profile.d/custom_aliases.sh
+        echo "alias k='kubectl'" >> /root/.bash_aliases
+        echo "alias k='kubectl'" >> /home/${username}/.bash_aliases  
+        
+  - chmod +x /etc/profile.d/custom_aliases.sh /root/.bash_aliases /home/${username}/.bash_aliases
+  - bash -l -c 'source /etc/profile.d/custom_aliases.sh'
+  - bash -l -c 'source /root/.bashrc'
+  - bash -l -c 'source /home/${username}/.bashrc'

@@ -1,0 +1,7 @@
+# plugin: yc_compute
+oauth_token: "" # has to be exproted as env var
+yc_clouds:
+  - "cloud-saimon19072001"
+yc_folders:
+  - "default"
+group_combination_depth: 3

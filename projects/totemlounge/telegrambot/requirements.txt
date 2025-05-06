@@ -1,0 +1,6 @@
+aiogram
+python-dotenv
+babel
+pytz
+nest_asyncio
+aiosqlite

@@ -1,0 +1,56 @@
+# Игнорировать все файлы crash.log и их варианты на любом уровне
+**/crash.log
+**/crash.*.log
+
+# Игнорировать Terraform-специфичные файлы и папки
+# **/*.tfvars
+# **/*.tfvars.json
+**/override.tf
+**/override.tf.json
+**/*_override.tf
+**/*_override.tf.json
+
+# Игнорировать все .terraform директории и файлы внутри них
+**/.terraform/
+**/.terraform.lock.hcl
+**/*.tfstate
+**/*.tfstate.backup
+**/.terraform.tfstate.lock.info
+**/.terra*
+
+# Игнорировать Terraform plans
+**/*tfplan*
+
+# Игнорировать конфигурационные файлы CLI инструментов
+**/*.terraformrc
+**/*terraform.rc
+
+# Игнорировать dev-специфичные файлы
+# **/.vscode/
+# **/*.env
+# **/*.key.json
+**/*ip.txt
+
+# Игнорировать конфигурационные файлы GitLab Runner
+**/*config.toml
+
+# Игнорировать project-specific скрипты
+**/update_token.sh
+**/html.sh.tpl
+
+# Игнорировать всё содержимое secrets, кроме папки и шифрованных секретов
+# **/secrets/**
+# !secrets/
+# !secrets/**/*.enc
+# !secrets/**/.gitkeep
+
+**/scripts/**
+!scripts/
+!scripts/.gitkeep
+
+# Ignore SOPS private keys
+**/**key.txt
+
+**/.sops.yaml.bak
+
+**/*.decrypted~*
