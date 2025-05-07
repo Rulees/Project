@@ -1,0 +1,35 @@
+#!/bin/bash
+# nano .git/hooks/pre-commit
+# chmod +x .git/hooks/pre-commit
+
+set -e
+
+echo "🔐 Проверка: все файлы в /secrets/ зашифрованы через SOPS..."
+
+has_errors=0
+
+# Получаем все проиндексированные файлы внутри secrets/
+FILES=$(git diff --cached --name-only | grep '^secrets/' || true)
+
+for file in $FILES; do
+  [[ ! -f "$file" ]] && continue
+  [[ "$file" == *.gitkeep ]] && continue
+
+  # Получаем JSON статус
+  status_json=$(sops filestatus "$file" 2>/dev/null || echo '{"encrypted":false}')
+
+  # Проверка, действительно ли файл зашифрован
+  is_encrypted=$(echo "$status_json" | jq -r '.encrypted' 2>/dev/null)
+
+  if [[ "$is_encrypted" != "true" ]]; then
+    echo "❌ $file НЕ зашифрован через SOPS (статус: $status_json)"
+    has_errors=1
+  fi
+done
+
+if [[ "$has_errors" -ne 0 ]]; then
+  echo "🛑 Коммит прерван: найдены НЕзашифрованные файлы в /secrets/"
+  exit 1
+fi
+
+echo "✅ Все секреты в порядке. Продолжаем коммит."
