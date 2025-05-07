@@ -1,3 +1,4 @@
+#!/bin/bash
 VALUE="" # or ""
 
 find . -type f -name terragrunt.hcl -execdir bash -c "
