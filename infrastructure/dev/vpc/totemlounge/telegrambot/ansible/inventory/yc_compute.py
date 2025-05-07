@@ -11,7 +11,6 @@ import os
 import sys
 import json
 import yaml
-import argparse
 from google.protobuf.json_format import MessageToDict
 from yandex.cloud.compute.v1.instance_service_pb2_grpc import InstanceServiceStub
 from yandex.cloud.compute.v1.instance_service_pb2 import ListInstancesRequest
@@ -51,10 +50,20 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         if not token:
             token = config.get('oauth_token', None)
 
-        if not token:
-            raise AnsibleError("Токен Yandex Cloud (OAUTH_TOKEN) отсутствует.")
-        
-        sdk = yandexcloud.SDK(token=token)
+        if token:
+            sdk = yandexcloud.SDK(token=token)
+            self.using_sa = False
+            display.v("✅ Используется OAuth авторизация.")
+        else:
+            sa_key_path = "/root/project/secrets/shared/yc_compute_viewer_sa_key.json"
+            try:
+                with open(sa_key_path, 'r') as f:
+                    sa_key = json.load(f)
+                sdk = yandexcloud.SDK(service_account_key=sa_key)
+                self.using_sa = True
+                display.v(f"✅ Используется SA авторизация из {sa_key_path}")
+            except Exception as e:
+                raise AnsibleError(f"Ошибка загрузки SA ключа из {sa_key_path}: {str(e)}")
         self.instance_service = sdk.client(InstanceServiceStub)
         self.folder_service = sdk.client(FolderServiceStub)
         self.cloud_service = sdk.client(CloudServiceStub)
@@ -65,7 +74,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         # Проверка совпадения облаков в конфиге и облаке
         missing_clouds = [cloud for cloud in config.get('yc_clouds', []) if cloud not in [c['name'] for c in all_clouds]]
-        if missing_clouds: display.warning(f"Облака в конфиге, которых нет в Yandex Cloud: {missing_clouds}")
+        if missing_clouds:
+            display.warning(f"Облака в конфиге, которых нет в Yandex Cloud: {missing_clouds}")
 
         # Фильтруем облака, если в конфиге указаны yc_clouds
         return [cloud for cloud in all_clouds if cloud['name'] in config.get('yc_clouds', [])]
@@ -76,7 +86,8 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
 
         # Проверка совпадения папок в конфиге и облаке
         missing_folders = [folder for folder in config.get('yc_folders', []) if folder not in [f['name'] for f in all_folders]]
-        if missing_folders: display.warning(f"Папки в конфиге, которых нет в Yandex Cloud: {missing_folders}")
+        if missing_folders:
+            display.warning(f"Папки в конфиге, которых нет в Yandex Cloud: {missing_folders}")
         
         # Фильтруем папки, если в конфиге указаны yc_folders
         return [folder for folder in all_folders if folder['name'] in config.get('yc_folders', [])]
@@ -84,14 +95,30 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
     def _get_all_hosts(self, config):
         """Получаем все хосты из папок в Yandex Cloud."""
         hosts = []
-        for cloud in self._get_clouds(config):
-            for folder in self._get_folders(cloud["id"], config):
-                instances = self.instance_service.List(ListInstancesRequest(folder_id=folder["id"]))
-                dict_ = MessageToDict(instances)
-                if dict_:
-                    hosts += dict_["instances"]
-                else:
-                    print(f"Warning: No instances found in folder {folder['name']}")
+
+        if getattr(self, 'using_sa', False) and config.get('yc_folder_id'):
+            # SA mode: use yc_folder_id directly
+            for folder_id in config.get('yc_folder_id', []):
+                try:
+                    instances = self.instance_service.List(ListInstancesRequest(folder_id=folder_id))
+                    dict_ = MessageToDict(instances)
+                    if dict_:
+                        hosts += dict_.get("instances", [])
+                    else:
+                        display.warning(f"Нет инстансов в папке {folder_id}")
+                except Exception as e:
+                    display.warning(f"Ошибка при получении инстансов из папки {folder_id}: {str(e)}")
+        else:
+            # OAuth mode: discover clouds/folders dynamically
+            for cloud in self._get_clouds(config):
+                for folder in self._get_folders(cloud["id"], config):
+                    instances = self.instance_service.List(ListInstancesRequest(folder_id=folder["id"]))
+                    dict_ = MessageToDict(instances)
+                    if dict_:
+                        hosts += dict_.get("instances", [])
+                    else:
+                        display.warning(f"Нет инстансов в папке {folder['name']}")
+
         return hosts
 
 
@@ -185,7 +212,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             # try /inventory/yc_compute.yml
             path = os.path.join(current_dir, 'inventory', "yc_compute.yml")
         if not os.path.isfile(path):
-            display.warning(f"Файл конфигурации {path} не найден!")
+            raise AnsibleError(f"Файл конфигурации {path} не найден!")
 
         # Чтение конфигурации
         config = self._load_config(path)
