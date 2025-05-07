@@ -1,28 +1,29 @@
 # 1) Order of rules goes from top to bottom.
 # 2) Also rules has to be specific, not general, cause only first rule matching
 # 3) .sops.yaml has to be inside root folder of your project
-
+# aws everywhere for a case of accidental remove of local private keys(it's happened once!)
 creation_rules:
   # 🔐 Admin
   - path_regex: ^secrets/(admin|backend)/.*$
     encrypted_regex: '.*'
     key_groups:
       - age:
-          - age1x20mffeqzuecsy2gv359yyd3txm6k46xhxx8u3x2v428vcwffyaq0txw0p
-
-
+          - age1sgrucltyqyjnvvqlz5rmkn72gyt90xadggeedrxeh2yrg92epewsh3gypt
+        kms:
+          - arn: arn:aws:kms:eu-north-1:590184089880:key/8b991131-2f94-4ab9-9d17-859a7f4d15b3
   # 🔐 Dev
   - path_regex: ^secrets/(dev|shared)/.*$
     encrypted_regex: '.*'
     key_groups:
       - age:
-          - age1pmkw2pnmmdya9n8m327dnqfs06ws3jgsy44mcau4w7a7fee2a5lq8dq94k
-
+          - age1z8834xslghj7v9uhtjqu0a949qfeg34eyaevhxl56dgkh9rx9vjq0d7hgy
+        kms:
+          - arn: arn:aws:kms:eu-north-1:590184089880:key/8b991131-2f94-4ab9-9d17-859a7f4d15b3
   # 🔐 Prod
   - path_regex: ^secrets/(prod|shared)/.*$
     encrypted_regex: '.*'
     key_groups:
       - age:
-          - age1ncdepydhznaeevp8vf9scq7rq7tplk4k9ech3ck6wlqhfg360pkshm80w7
-  
-  # Scripts
+          - age1zewwvsatk3n5je85x2pl70z03a957rk39d2g6gzmg49ejw7q6p0qy0a22k
+        kms:
+          - arn: arn:aws:kms:eu-north-1:590184089880:key/8b991131-2f94-4ab9-9d17-859a7f4d15b3

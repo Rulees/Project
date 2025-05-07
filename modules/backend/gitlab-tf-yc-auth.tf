@@ -20,15 +20,15 @@ resource "yandex_iam_service_account_key" "this" {
 
 # This file will be used in Terraform for authentication when applying the configuration.
 resource "local_file" "gitlab_tf_key" {
-  filename           = "../secrets/backend/.key.json"
+  filename           = "../../secrets/backend/.key.json"
   content            = <<EOH
-  {
-    "id": "${yandex_iam_service_account_key.this.id}",
-    "service_account_id": "${yandex_iam_service_account.gitlab_tf.id}",
-    "created_at": "${yandex_iam_service_account_key.this.created_at}",
-    "key_algorithm": "${yandex_iam_service_account_key.this.key_algorithm}",
-    "public_key": ${jsonencode(yandex_iam_service_account_key.this.public_key)},
-    "private_key": ${jsonencode(yandex_iam_service_account_key.this.private_key)}
-  }
-  EOH
+{
+  "id": "${yandex_iam_service_account_key.this.id}",
+  "service_account_id": "${yandex_iam_service_account.gitlab_tf.id}",
+  "created_at": "${yandex_iam_service_account_key.this.created_at}",
+  "key_algorithm": "${yandex_iam_service_account_key.this.key_algorithm}",
+  "public_key": ${jsonencode(yandex_iam_service_account_key.this.public_key)},
+  "private_key": ${jsonencode(yandex_iam_service_account_key.this.private_key)}
+}
+EOH
 }

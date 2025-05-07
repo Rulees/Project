@@ -123,10 +123,10 @@ resource "aws_dynamodb_table" "lock" {
 # Создание файла .env с ключами доступа
 resource "local_file" "env" {
   content     = <<EOH
-    export AWS_ACCESS_KEY_ID="${yandex_iam_service_account_static_access_key.this.access_key}"
-    export AWS_SECRET_ACCESS_KEY="${yandex_iam_service_account_static_access_key.this.secret_key}"
-  EOH
-  filename = "../secrets/backend/.env"
+AWS_ACCESS_KEY_ID="${yandex_iam_service_account_static_access_key.this.access_key}"
+AWS_SECRET_ACCESS_KEY="${yandex_iam_service_account_static_access_key.this.secret_key}"
+EOH
+  filename = "../../secrets/backend/.env"
 }
 
 

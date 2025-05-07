@@ -20,7 +20,6 @@ terraform {
 
 
 module "backend" {
-  # source          = "${get_repo_root()}/modules/backend" # check
   source          = "../../modules/backend"
   backend_prefix  = "yc-backend"
   project_prefix  = "project-dildakot"
