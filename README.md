@@ -1,0 +1,1 @@
+TRY GITOPS. without k8s
