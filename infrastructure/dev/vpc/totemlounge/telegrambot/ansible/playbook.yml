@@ -1,6 +1,6 @@
 ---
 - name: Deploy telegram_bot
-  hosts: telegrambot_totembot_dev
+  hosts: env_dev__app_totemlounge_telegrambot
   become: true
   tasks:
 

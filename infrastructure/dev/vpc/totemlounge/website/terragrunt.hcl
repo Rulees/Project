@@ -1,10 +1,10 @@
 terraform {
-  source = "../../../../../modules//yc-ec2/"
+  source = "${get_repo_root()}/modules//yc-ec2/"
 }
 
 
 include "root" {
-  path = find_in_parent_folders("root.hcl")
+  path   = find_in_parent_folders("root.hcl")
   expose = true
 }
 
@@ -21,6 +21,14 @@ dependency "sg" {
   mock_outputs_allowed_terraform_commands = ["init", "validate", "plan", "providers", "terragrunt-info", "show"]
   mock_outputs = {
     sg_id = "sg-id-fake"
+  }
+}
+
+dependency "sa_cert_downloader" {
+  config_path                             = "../../../../sa_/cert_downloader"
+  mock_outputs_allowed_terraform_commands = ["init", "validate", "plan", "providers", "terragrunt-info", "show"]
+  mock_outputs = {
+    key_path = "secrets/shared/yc_cert_downloader_sa_key.json"
   }
 }
 
@@ -54,18 +62,21 @@ inputs = {
   boot_disk = {
     type                        = "network-ssd"
     image_id                    = "fd8kc2n656prni2cimp5" # container-optimized-image
-    size                        = 20 
+    size                        = 15
   }
 
   # NETWORK
   network_interfaces = [{
     subnet_id                   = dependency.network.outputs.subnet_id
     security_group_ids          = [dependency.sg.outputs.sg_id]
+    
+    # CHOICE (Uncomment one):   #1) Dynamic NAT  #2) Use static IP  #3) Enable DDoS-protected static IP
     nat                         = true
-    # nat_ip_address              = "158.160.39.80" # choose: dns or ip
+    # nat_ip_address              = "158.160.39.80"
   }]
+  # static_ip_ddos_protection     = true
 
-  # DNS
+  # DNS(AUTO REDIRECT)
   dns = {
     zone_id                     = "dnsdejjcevumag5r1q11"
     name                        = "dev.arkselen.ru."

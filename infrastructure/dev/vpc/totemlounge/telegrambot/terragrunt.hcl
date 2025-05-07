@@ -1,10 +1,10 @@
 terraform {
-  source = "../../../../../modules//yc-ec2/"
+  source = "${get_repo_root()}/modules//yc-ec2/"
 }
 
 
 include "root" {
-  path = find_in_parent_folders("root.hcl")
+  path   = find_in_parent_folders("root.hcl")
   expose = true
 }
 
@@ -35,7 +35,6 @@ locals {
 }
 
 inputs = {  
-  
   # GENERAL
   env                           = local.env
   zone                          = local.zone
@@ -44,6 +43,7 @@ inputs = {
   serial_port_enable            = false
   labels                        = local.labels
   
+
 
   # COMPUTE RESOURCES
   name                          = "vm"
@@ -54,16 +54,19 @@ inputs = {
   boot_disk = {
     type                        = "network-ssd"
     image_id                    = "fd8kc2n656prni2cimp5" # container-optimized-image
-    size                        = 20 
+    size                        = 15
   }
 
   # NETWORK
   network_interfaces = [{
     subnet_id                   = dependency.network.outputs.subnet_id
     security_group_ids          = [dependency.sg.outputs.sg_id]
+    
+    # CHOICE (Uncomment one):   #1) Dynamic NAT  #2) Use static IP  #3) Enable DDoS-protected static IP
     nat                         = true
     # nat_ip_address              = "158.160.39.80"
   }]
+  # static_ip_ddos_protection     = true
   
   # SSH
   enable_oslogin_or_ssh_keys = {

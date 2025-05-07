@@ -33,7 +33,7 @@ variable "cores" {
 }
 
 variable "core_fraction" {
-  description = "Guaranteed CPU-Share during all the work.(20%, 50%, 100%) If share is less than 100, vm provides the specified level of performance with a probability of a temporary increase up to 100%"
+  description = "Guaranteed CPU-Share during all the work.(50%, *%) If share is less than 100, vm provides the specified level of performance with a probability of a temporary increase up to 100%"
   type        = number
   default     = 20
 }
@@ -72,7 +72,7 @@ variable "scheduling_policy_preemptible" {
 }
 
 variable "serial_port_enable" {
-  description = "Open/Close serial port for accessing-debugging vm"
+  description = "Open/Close serial port for accessing-debugging vm in GUI"
   type        = bool
   default     = false
 }
@@ -84,9 +84,9 @@ variable "labels" {
 }
 
 variable "custom_metadata" {
-  description  = "Add custom metadata to node-groups"
-  type         = map(any)
-  default      = {}
+  description = "Add custom metadata to node-groups"
+  type        = map(any)
+  default     = {}
 }
 
 # NETWORK
@@ -107,7 +107,7 @@ variable "network_interfaces" {
 
 # DNS
 variable "dns" {
-  description = "DNS record configuration to redirect arkselen.ru to dynamic-server-ip"
+  description = "DNS record configuration to redirect arkselen.ru to dynamic-server-ip without creating additional DNS-A-note in GUI for redirecting"
   type = object({
     zone_id   = string
     name      = string
@@ -119,10 +119,17 @@ variable "dns" {
 
 # SSH
 variable "enable_oslogin_or_ssh_keys" {
-  description = "Configuration for enabling OS Login or SSH keys for the instance."
+  description      = "Configuration for enabling OS Login or SSH keys for the instance."
   type = object({
-    enable-oslogin = optional(string, "false") # broke my metadata if turn on
+    enable-oslogin = optional(string, "false") # it brokes my metadata if enabled
     ssh_user       = optional(string, null)
     ssh_key        = optional(string, null)    # public key content
   })
+}
+
+# STATIC-IP-WITH-DDOS-PROTECTION
+variable "static_ip_ddos_protection" {
+  description = "Enable/Disable using static ip"
+  type        = bool
+  default     = false
 }

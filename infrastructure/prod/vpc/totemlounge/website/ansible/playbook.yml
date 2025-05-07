@@ -1,39 +1,38 @@
 ---
 - name: Deploy telegram_bot
-  hosts: telegrambot_totembot_prod
+  hosts: env_prod__app_totemlounge_prod
   become: true
   tasks:
 
-    - name: Pull repository code
-      block:
-          - name: Copy private-ssh-key from local to server for pulling repository 
-            copy:
-              src: /root/.ssh/YC
-              dest: /root/.ssh/YC
-              mode: '0600'
+    
+    - name: Copy private-ssh-key from local to server for pulling repository 
+      copy:
+        src: /root/.ssh/YC
+        dest: /root/.ssh/YC
+        mode: '0600'
 
-          - name: Pull latest code from Git repository
-            git:
-              repo: 'git@github.com:Rulees/DildaKot.git'
-              dest: /home/melnikov/DildaKot
-              version: main
-              force: yes
-              accept_hostkey: yes
-              key_file: /root/.ssh/YC
-            notify:
-              - Restart telegram bot
+    - name: Pull latest code from Git repository
+      git:
+        repo: 'git@github.com:Rulees/DildaKot.git'
+        dest: /home/melnikov/DildaKot
+        version: main
+        force: yes
+        accept_hostkey: yes
+        key_file: /root/.ssh/YC
+      notify:
+        - Restart telegram bot
 
-          - name: Remove temporary private key
-            file:
-              path: /root/.ssh/YC
-              state: absent
+    - name: Remove temporary private key
+      file:
+        path: /root/.ssh/YC
+        state: absent
 
-          - name: Set correct ownership for project files
-            file:
-              path: /home/melnikov/DildaKot
-              owner: melnikov
-              group: melnikov
-              recurse: yes
+    - name: Set correct ownership for project files
+      file:
+        path: /home/melnikov/DildaKot
+        owner: melnikov
+        group: melnikov
+        recurse: yes
 
 
     - name: Copy .env to remote server

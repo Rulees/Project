@@ -1,5 +1,6 @@
 locals {
   ec2_name         = "${var.project_prefix}--${var.ec2_name}-${random_id.this.hex}--${var.env}"
+  # static_ip        = var.static_ip ? {external_ipv4_address = {zone_id = var.static_ip_zone_id}} : null
   # metadata is used of broken mechanism of enable_oslogin and ssh-connection... 
   custom_metadata  = {user-data  = templatefile("cloud-init.yml", {
     username       = var.enable_oslogin_or_ssh_keys.ssh_user
@@ -37,13 +38,16 @@ module "yc-ec2" {
   enable_oslogin_or_ssh_keys    = var.enable_oslogin_or_ssh_keys
 }
 
-# ANSIBLE  
-# resource "local_file" "vm_ip" {
-#   content  = module.yc-ec2.external_ip[0]
-#   filename = var.vm_ip_file_name  # Файл с IP адресом
-# }
-
 resource "random_id" "this" {
   byte_length = 2
 }
 
+# STATIC-IP-WITH-DDOS-PROTECTION
+resource "yandex_vpc_address" "addr" {
+  count = var.static_ip_ddos_protection ? 1 : 0
+
+  external_ipv4_address {
+    zone_id                  = "ru-central1-a"
+    ddos_protection_provider = "qrator"
+  }
+}

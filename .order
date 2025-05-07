@@ -1,16 +1,24 @@
 modules
+modules/backend
+modules/network
+modules/sg
+modules/sa
+modules/yc-ec2
 
 infrastructure
-infrastructure/backend
+infrastructure/backend_
+infrastructure/sa_
 
 infrastructure/dev
 infrastructure/dev/network
 infrastructure/dev/sg
+infrastructure/dev/sa_
 infrastructure/dev/vpc
 
 infrastructure/prod
 infrastructure/prod/network
 infrastructure/prod/sg
+infrastructure/prod/sa_
 infrastructure/prod/vpc
 
 projects
@@ -22,6 +30,7 @@ secrets/global/gitlab_ssh_key
 secrets/global/yc_ssh_key
 
 secrets/backend
+secrets/shared
 secrets/dev
 secrets/prod
 

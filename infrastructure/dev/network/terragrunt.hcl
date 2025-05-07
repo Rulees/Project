@@ -1,6 +1,6 @@
 # 1
 terraform {
-  source = "../../../modules//network/"
+  source = "${get_repo_root()}/modules//network/"
 }
 
 

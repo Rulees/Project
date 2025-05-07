@@ -1,26 +1,26 @@
 variable "project_prefix" {
-  description = "Name prefix of project."
-  type        = string
+  description        = "Name prefix of project."
+  type               = string
 }
 
 variable "network_id" {
-  description = "Network(vpc) id"
-  type        = string
+  description        = "Network(vpc) id"
+  type               = string
 }
 
 variable "env" {
-  description = "Set 'prod' for production, or 'dev' for development"
-  type        = string
+  description        = "Set 'prod' for production, or 'dev' for development"
+  type               = string
 }
 
 
 variable "security_group_runners" {
   type = list(object({
-    direction      = string  # "ingress" или "egress"
-    description    = string
-    protocol       = string
-    ports          = list(number)
-    v4_cidr_blocks = list(string)
+    direction        = string  # "ingress" или "egress"
+    description      = string
+    protocol         = string
+    ports            = list(number)
+    v4_cidr_blocks   = list(string)
   }))
   default = [
     # Входящие правила
