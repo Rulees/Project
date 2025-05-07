@@ -26,7 +26,7 @@
 **/*terraform.rc
 
 # Игнорировать dev-специфичные файлы
-# **/.vscode/
+**/.vscode/
 # **/*.env
 # **/*.key.json
 **/*ip.txt
@@ -44,9 +44,9 @@
 # !secrets/**/*.enc
 # !secrets/**/.gitkeep
 
-**/scripts/**
-!scripts/
-!scripts/.gitkeep
+# **/scripts/**
+# !scripts/
+# !scripts/.gitkeep
 
 # Ignore SOPS private keys
 **/**key.txt

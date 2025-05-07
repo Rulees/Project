@@ -4,7 +4,7 @@
 
 creation_rules:
   # 🔐 Admin
-  - path_regex: ^secrets/(global|backend)/.*$
+  - path_regex: ^secrets/(admin|backend)/.*$
     encrypted_regex: '.*'
     key_groups:
       - age:
@@ -12,16 +12,17 @@ creation_rules:
 
 
   # 🔐 Dev
-  - path_regex: ^secrets/dev/.*$
+  - path_regex: ^secrets/(dev|shared)/.*$
     encrypted_regex: '.*'
     key_groups:
       - age:
           - age1pmkw2pnmmdya9n8m327dnqfs06ws3jgsy44mcau4w7a7fee2a5lq8dq94k
 
   # 🔐 Prod
-  - path_regex: ^secrets/prod/.*$
+  - path_regex: ^secrets/(prod|shared)/.*$
     encrypted_regex: '.*'
     key_groups:
       - age:
           - age1ncdepydhznaeevp8vf9scq7rq7tplk4k9ech3ck6wlqhfg360pkshm80w7
-        
+  
+  # Scripts

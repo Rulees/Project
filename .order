@@ -24,10 +24,11 @@ infrastructure/prod/vpc
 projects
 
 secrets
-secrets/global
-secrets/global/gitlab.env
-secrets/global/gitlab_ssh_key
-secrets/global/yc_ssh_key
+
+secrets/admin
+secrets/admin/gitlab.env
+secrets/admin/gitlab_ssh_key
+secrets/admin/yc_ssh_key
 
 secrets/backend
 secrets/shared
