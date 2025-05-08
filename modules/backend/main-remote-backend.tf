@@ -16,8 +16,8 @@ data "yandex_client_config" "client" {}
 
 locals {
   prefix = "${var.project_prefix}--${var.backend_prefix}"
-
-  service_account_name = "${local.prefix}--sa"
+  #>
+  service_account_name = "${local.prefix}"
   bucket_name          = "${local.prefix}--${random_string.unique_id.result}"
   kms_key_name         = "${local.prefix}--kms"
   ydb_database_name    = "${local.prefix}--ydb"
@@ -126,7 +126,7 @@ resource "local_file" "env" {
 AWS_ACCESS_KEY_ID="${yandex_iam_service_account_static_access_key.this.access_key}"
 AWS_SECRET_ACCESS_KEY="${yandex_iam_service_account_static_access_key.this.secret_key}"
 EOH
-  filename = "../../secrets/backend/.env"
+  filename = "../../secrets/admin/remote-backend.env"
 }
 
 

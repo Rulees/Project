@@ -1,6 +1,6 @@
  # Create a service account for accessing Yandex Cloud via Terraform through GitLab
 resource "yandex_iam_service_account" "gitlab_tf" {
-  name               = "${var.project_prefix}--gitlab-terraform-sa"
+  name               = "${var.project_prefix}--admin"
 }
 
 # This gives full administrative access to manage resources within the folder.
@@ -15,12 +15,11 @@ resource "yandex_resourcemanager_folder_iam_member" "sa-admin" {
 resource "yandex_iam_service_account_key" "this" {
   service_account_id = "${yandex_iam_service_account.gitlab_tf.id}"
   key_algorithm      = "RSA_2048" # RSA_4096
-
 }
 
 # This file will be used in Terraform for authentication when applying the configuration.
 resource "local_file" "gitlab_tf_key" {
-  filename           = "../../secrets/backend/.key.json"
+  filename           = "../../secrets/admin/yc_admin_sa_key.json"
   content            = <<EOH
 {
   "id": "${yandex_iam_service_account_key.this.id}",

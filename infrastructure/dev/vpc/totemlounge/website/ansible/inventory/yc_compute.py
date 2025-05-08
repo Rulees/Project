@@ -55,7 +55,7 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
             self.using_sa = False
             display.v("✅ Используется OAuth авторизация.")
         else:
-            sa_key_path = "/root/project/secrets/shared/yc_compute_viewer_sa_key.json"
+            sa_key_path = "/root/project/secrets/ops/yc_compute_viewer_sa_key.json"
             try:
                 with open(sa_key_path, 'r') as f:
                     sa_key = json.load(f)

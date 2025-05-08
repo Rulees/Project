@@ -17,5 +17,5 @@ inputs = {
   folder_id      = include.root.locals.folder_id
   sa_name        = local.sa_name
   roles          = ["certificate-manager.certificates.downloader"]
-  key_path       = "${get_repo_root()}/secrets/shared/yc_${replace(local.sa_name, "-", "_")}_sa_key.json"
+  key_path       = "${get_repo_root()}/secrets/ops/yc_${replace(local.sa_name, "-", "_")}_sa_key.json"
 }

@@ -28,7 +28,7 @@ dependency "sa_cert_downloader" {
   config_path                             = "../../../../sa_/cert_downloader"
   mock_outputs_allowed_terraform_commands = ["init", "validate", "plan", "providers", "terragrunt-info", "show"]
   mock_outputs = {
-    key_path = "secrets/shared/yc_cert_downloader_sa_key.json"
+    key_path = "secrets/ops/yc_cert_downloader_sa_key.json"
   }
 }
 

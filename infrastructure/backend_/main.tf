@@ -21,6 +21,6 @@ terraform {
 
 module "backend" {
   source          = "../../modules/backend"
-  backend_prefix  = "yc-backend"
+  backend_prefix  = "yc-backend"        # change to remote-backend
   project_prefix  = "project-dildakot"
 }

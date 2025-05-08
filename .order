@@ -35,8 +35,7 @@ secrets/admin/gitlab.env
 secrets/admin/gitlab_ssh_key
 secrets/admin/yc_ssh_key
 
-secrets/backend
-secrets/shared
+secrets/ops
 secrets/dev
 secrets/prod
 

@@ -2,7 +2,7 @@
 
 # GitLab API конфигурация
 PROJECT_ID="" 
-GITLAB_API_PROJECT_TOKEN="" # from /secrets/shared/gitlab.env
+GITLAB_API_PROJECT_TOKEN="" # from /secrets/ops/gitlab.env
 SOPS_ADMIN_KEY=$(cat ~/.sops/age_admin_key.txt)
 SOPS_DEV_KEY=$(cat ~/.sops/age_dev_key.txt)
 SOPS_PROD_KEY=$(cat ~/.sops/age_prod_key.txt)
@@ -26,8 +26,8 @@ add_gitlab_variable() {
 
 #                                                            [TYPE]     [MASKED]  [PROTECTED]             [VALUE]                          [DESCRIPTION]
 add_gitlab_variable "SOPS_ADMIN_KEY"                        "env_var"     true       false            "$SOPS_ADMIN_KEY"               "SOPS AGE PRIVATE KEY FOR DECRYPTING ADMIN SECRETS"
-add_gitlab_variable "SOPS_DEV_KEY"                          "env_var"     true       false            "$SOPS_DEV_KEY"                 "SOPS AGE PRIVATE KEY FOR DECRYPTING DEV/SHARED SECRETS"
-add_gitlab_variable "SOPS_PROD_KEY"                         "env_var"     true       false            "$SOPS_PROD_KEY"                "SOPS AGE PRIVATE KEY FOR DECRYPTING PROD/SHARED SECRETS"
+add_gitlab_variable "SOPS_DEV_KEY"                          "env_var"     true       false            "$SOPS_DEV_KEY"                 "SOPS AGE PRIVATE KEY FOR DECRYPTING DEV SECRETS"
+add_gitlab_variable "SOPS_PROD_KEY"                         "env_var"     true       false            "$SOPS_PROD_KEY"                "SOPS AGE PRIVATE KEY FOR DECRYPTING PROD SECRETS"
 
 
 

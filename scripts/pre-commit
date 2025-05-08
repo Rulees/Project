@@ -14,6 +14,7 @@ FILES=$(git diff --cached --name-only | grep '^secrets/' || true)
 for file in $FILES; do
   [[ ! -f "$file" ]] && continue
   [[ "$file" == *.gitkeep ]] && continue
+  [[ "$(basename "$file")" == "README.md" ]] && continue
 
   # Получаем JSON статус
   status_json=$(sops filestatus "$file" 2>/dev/null || echo '{"encrypted":false}')
