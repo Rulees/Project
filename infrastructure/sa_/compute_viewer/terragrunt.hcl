@@ -12,7 +12,7 @@ locals {
 }
 
 inputs = {
-  create_mode    = true # TRUE = create sa!  FALSE = use existing via data.*
+  create_mode    = false # TRUE = create sa!  FALSE = use existing via data.*
   project_prefix = include.root.locals.project_prefix
   folder_id      = include.root.locals.folder_id
   sa_name        = local.sa_name

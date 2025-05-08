@@ -1,0 +1,13 @@
+# plugin: yc_compute
+oauth_token: ""
+group_combination_depth: 3
+
+# With Oauth
+yc_clouds:
+  - "cloud-saimon19072001"
+yc_folders:
+  - "dev"
+
+# With SA
+yc_folder_id:
+  - "b1ghomnle3pg309t5gu0"

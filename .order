@@ -21,6 +21,11 @@ infrastructure/prod/sg
 infrastructure/prod/sa_
 infrastructure/prod/vpc
 
+infrastructure/ansible
+infrastructure/ansible/inventory
+infrastructure/ansible/roles
+infrastructure/ansible/playbooks
+
 projects
 
 secrets
@@ -36,6 +41,12 @@ secrets/dev
 secrets/prod
 
 scripts
+scripts/ci/detect.py
+scripts/ci/apply.py
+scripts/ci/deploy.py
+scripts/ci/destroy.py
+
+
 root.hcl
 .gitlab-ci.yml
 .gitignore
