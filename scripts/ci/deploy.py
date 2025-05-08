@@ -4,11 +4,13 @@ import sys
 import json
 
 def run_ansible(env, app, service):
+    group = f"env_{env}__app_{app}_{service}"
     playbook = f"infrastructure/ansible/playbooks/{service}.yml"
-    print(f"🚀 Deploying Ansible for {env} {app} {service}")
+    print(f"🚀 Deploying Ansible to group {group} using playbook {playbook}")
     subprocess.run([
         "ansible-playbook",
         playbook,
+        "-l", group,
         "-e", f"env={env}",
         "-e", f"app={app}",
         "-e", f"service={service}"

@@ -17,11 +17,12 @@ def detect_changed_paths():
             env = parts[1]
             app = parts[3]
             service = parts[4]
-            services.add((env, app, service))
+            group = f"env_{env}__app_{app}_{service}"
+            services.add((env, app, service, group))
 
     output = [
-        {'env': env, 'app': app, 'service': service}
-        for (env, app, service) in sorted(services)
+        {'env': env, 'app': app, 'service': service, 'group': group}
+        for (env, app, service, group) in sorted(services)
     ]
 
     with open('changed_services.json', 'w') as f:
