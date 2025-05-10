@@ -2,13 +2,13 @@ ENV ?=
 APP ?=
 SERVICE ?=
 
-.PHONY: detect create configure destroy
+.PHONY: detect create deploy destroy
 
 detect:
 	python3 scripts/ci/20-detect.py
 
 create:
-	python3 scripts/ci/30-create.py $(ENV) $(APP) $(SERVICE)
+	yes | python3 scripts/ci/30-create.py $(ENV) $(APP) $(SERVICE)
 
 deploy:
 	python3 scripts/ci/40-deploy.py $(ENV) $(APP) $(SERVICE)

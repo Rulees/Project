@@ -3,4 +3,5 @@
   hosts: all
   become: true
   roles:
+    - docker_install
     - website_deploy

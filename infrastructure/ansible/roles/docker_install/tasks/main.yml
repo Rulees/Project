@@ -1,0 +1,49 @@
+- name: Удалить блокировки dpkg
+  shell: |
+    rm -f /var/lib/dpkg/lock-frontend /var/cache/apt/archives/lock
+  ignore_errors: yes
+
+- name: Check if Docker is already installed
+  command: docker --version
+  register: docker_installed
+  ignore_errors: yes
+  changed_when: false
+
+- name: Установить Docker (Ubuntu)
+  apt:
+    name: docker.io
+    state: present
+    update_cache: yes
+  when:
+    - ansible_facts['os_family'] == "Debian"
+    - docker_installed.rc != 0
+
+- name: Установить Docker (Fedora)
+  dnf:
+    name: docker
+    state: present
+  when: ansible_facts['os_family'] == "RedHat"
+
+- name: Запуск Docker
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Добавить пользователя в группу Docker
+  user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: yes
+
+- name: Install docker-compose
+  get_url:
+    url: https://github.com/docker/compose/releases/download/v2.34.0/docker-compose-linux-x86_64
+    dest: /usr/local/bin/docker-compose
+    mode: 'u+x,g+x'
+
+- name: Change docker-compose-file ownership, group
+  file:
+    path: /usr/local/bin/docker-compose
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"

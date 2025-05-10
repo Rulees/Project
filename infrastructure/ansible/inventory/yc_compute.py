@@ -210,10 +210,10 @@ class InventoryModule(BaseInventoryPlugin, Constructable, Cacheable):
         
         # Получаем текущую рабочую директорию (откуда был запущен Ansible)
         current_dir = os.getcwd()
-        path = os.path.join(current_dir, "yc_compute.py")  # Join the directory with the config file path
+        path = os.path.join(current_dir, "yc_compute.yml")  # Join the directory with the config file path
         if not os.path.isfile(path):
             # try /inventory/yc_compute.py
-            path = os.path.join(current_dir, 'inventory', "yc_compute.py")
+            path = os.path.join(current_dir, 'inventory', "yc_compute.yml")
         if not os.path.isfile(path):
             raise AnsibleError(f"Файл конфигурации {path} не найден!")
 

@@ -42,7 +42,7 @@ def main():
         print(f" - {build_group_name(m['env'], m['app'], m['service'])}")
 
     # Build command
-    cmd = ["terragrunt", "apply", "--all"]
+    cmd = ["terragrunt", "apply", "--all", "-lock=false"]
     if include_dir:
         cmd += ["--terragrunt-include-dir", include_dir]
     cmd += ["--working-dir", str(working_dir)]

@@ -3,16 +3,11 @@ ansible_ssh_port: 22
 ansible_host_key_checking: false
 ansible_python_interpreter: /usr/bin/python3
 
-work_dir: "{{ lookup('env', 'WORK_DIR') | default(playbook_dir | dirname | dirname, true) }}"
-
-
+work_dir: "{{ lookup('env', 'WORK_DIR') }}" 
 secret_env_file: "{{ work_dir }}/secrets/{{ env }}/{{ app }}/{{ service }}/secret.env"
-yc_cert_viewer_sa_key_file: "{{ work_dir }}/secrets/ops/yc_cert_viewer_sa_key.json"
+secret_ops_folder: "{{ work_dir }}/secrets/ops"
 
 # Docker
-docker_context_path: "{{ work_dir }}/projects/{{ app }}/{{ service }}"
+docker_build_path: "{{ work_dir }}/projects/{{ app }}/{{ service }}"
 image_name: "{{ service }}_image"
 container_name: "{{ service }}_container"
-docker_ports:
-  - "80:80"
-  - "443:443"

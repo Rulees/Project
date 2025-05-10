@@ -1,0 +1,8 @@
+# Env file for reading by docker to know where secrets are stored
+remote_env_file: /tmp/.env
+# Path for cert-FILE locally and on vm
+yc_cert_downloader_sa_key_file: "{{ work_dir }}/secrets/ops/yc_cert_downloader_sa_key.json"
+yc_cert_downloader_sa_key_folder: "{{ work_dir }}/secrets/ops"
+# Path for cert-FOLDER inside container
+container_sa_volume_folder_path: "{{ work_dir }}/secrets/ops"
+

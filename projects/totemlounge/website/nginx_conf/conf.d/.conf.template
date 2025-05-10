@@ -1,21 +1,11 @@
 # /etc/nginx/conf.d/*.conf
 server {
-    listen 80;
-    server_name ${DOMAIN};
-
-    location /.well-known/acme-challenge/ {
-        root /certbot/www;
-    }
-
+    listen 80 default_server;
     if ($scheme = 'http') {
         return 301 https://$host$request_uri;
     }
-}
 
-server {
-
-    listen 443 ssl;
-    listen [::]:443 ssl ipv6only=on;
+    listen 443 default_server ssl;
 
     server_name ${DOMAIN};
 
@@ -32,5 +22,7 @@ server {
     ###
     # Other
     ###
-}   
+}
+   
+
 
