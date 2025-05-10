@@ -7,10 +7,22 @@ YC_API_URL="https://data.certificate-manager.api.cloud.yandex.net/certificate-ma
 if [ ! -f $CERT_PATH/fullchain.pem ] || [ ! -f $CERT_PATH/privkey.pem ]; then
     echo "🔄 Certificates missing. Downloading new ones..."
 
-    if [ -z "$IAM_TOKEN" ]; then
-        echo "❌ Error: IAM token is empty!"
+    if [ -n "$SA_KEY_FILE" ] && [ -f "$SA_KEY_FILE" ]; then
+    echo "🔑 Generating IAM token from Service Account JSON..."
+    IAM_TOKEN=$(curl -s -X POST \
+        -H "Content-Type: application/json" \
+        -d @"$SA_KEY_FILE" \
+        "https://iam.api.cloud.yandex.net/iam/v1/tokens" | jq -r '.iamToken')
+
+    if [ -z "$IAM_TOKEN" ] || [ "$IAM_TOKEN" = "null" ]; then
+        echo "❌ Failed to get IAM token from SA key"
         exit 1
     fi
+else
+    echo "❌ SA_KEY_FILE is not provided or missing"
+    exit 1
+fi
+
 
     mkdir -p $CERT_PATH
 

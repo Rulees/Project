@@ -1,0 +1,6 @@
+---
+- name: Deploy website
+  hosts: all
+  become: true
+  roles:
+    - website_deploy

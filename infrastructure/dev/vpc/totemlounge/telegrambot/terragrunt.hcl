@@ -25,13 +25,14 @@ dependency "sg" {
 }
 
 locals {
-  env          = include.root.locals.env_vars.locals.env
-  zone         = include.root.locals.env_vars.locals.zone
-  work_dir     = include.root.locals.work_dir
+  env            = include.root.locals.env_vars.locals.env
+  zone           = include.root.locals.env_vars.locals.zone
+  work_dir       = include.root.locals.work_dir
   # labels
-  env_labels   = include.root.locals.env_vars.locals.env_labels
-  app_labels   = {app = "${basename(dirname(get_terragrunt_dir()))}_${basename(get_terragrunt_dir())}"}
-  labels       = merge(local.env_labels, local.app_labels)
+  env_labels     = include.root.locals.env_vars.locals.env_labels
+  app_labels     = {app = "${basename(dirname(get_terragrunt_dir()))}"}
+  service_labels = {service = "${basename(get_terragrunt_dir())}"}
+  labels         = merge(local.env_labels, local.app_labels, local.service_labels)
 }
 
 inputs = {  

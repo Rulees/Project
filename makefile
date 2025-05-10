@@ -1,13 +1,17 @@
-.PHONY: detect apply deploy destroy
+ENV ?=
+APP ?=
+SERVICE ?=
+
+.PHONY: detect create configure destroy
 
 detect:
-	python3 scripts/ci/detect.py
+	python3 scripts/ci/20-detect.py
 
-apply:
-	python3 scripts/ci/apply.py $(if $(filter %.json,$(firstword $(MAKECMDGOALS))),$(firstword $(MAKECMDGOALS)),$(ENV) $(APP) $(SERVICE))
+create:
+	python3 scripts/ci/30-create.py $(ENV) $(APP) $(SERVICE)
 
 deploy:
-	python3 scripts/ci/deploy.py $(if $(filter %.json,$(firstword $(MAKECMDGOALS))),$(firstword $(MAKECMDGOALS)),$(ENV) $(APP) $(SERVICE))
+	python3 scripts/ci/40-deploy.py $(ENV) $(APP) $(SERVICE)
 
 destroy:
-	python3 scripts/ci/destroy.py $(ENV)
+	python3 scripts/ci/50-destroy.py $(ENV) $(APP) $(SERVICE)

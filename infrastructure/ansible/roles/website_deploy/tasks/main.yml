@@ -1,0 +1,48 @@
+---
+- name: Deploy website container
+  become: yes
+  vars:
+    container_env_file: /tmp/.env_combined
+    container_sa_path: /secrets/yc_cert_viewer_sa_key.json  
+  tasks:
+
+    - name: Create combined .env file with secret.env + SA_KEY_FILE(path to yandex certificate file)
+      block:
+          - name: Add SA_KEY_FILE line to env file
+            blockinfile:
+              path: "{{ container_env_file }}"
+              create: yes
+              block: |
+                SA_KEY_FILE={{ container_sa_path }}
+
+          - name: Append secret.env to env file
+            copy:
+              src: "{{ secret_env_file }}"
+              dest: "{{ container_env_file }}"
+              remote_src: yes
+              content: "{{ lookup('file', secret_env_file) }}"
+              force: no
+              mode: '0644'
+
+    - name: Build + Run Docker container
+      block:
+          - name: Build Docker image
+            docker_image:
+              name: "{{ image_name }}"
+              build:
+                path: "{{ docker_context_path }}"
+              source: build
+              force_source: true
+              force_tag: true
+
+          - name: Launch/Relaunch Docker container
+            docker_container:
+              name: "{{ container_name }}"
+              image: "{{ image_name }}"
+              state: started
+              restart_policy: always
+              env_file: "{{ container_env_file }}"
+              volumes:
+                - "{{ yc_cert_viewer_sa_key_file }}:{{ container_sa_path }}:ro"
+              ports: "{{ docker_ports }}"
+              recreate: yes
