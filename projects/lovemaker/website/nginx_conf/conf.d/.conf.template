@@ -1,0 +1,28 @@
+# /etc/nginx/conf.d/*.conf
+server {
+    listen 80 default_server;
+    if ($scheme = 'http') {
+        return 301 https://$host$request_uri;
+    }
+
+    listen 443 default_server ssl;
+
+    server_name ${DOMAIN};
+
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+
+    root /sites/starter;
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+
+    ###
+    # Other
+    ###
+}
+   
+
+
