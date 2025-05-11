@@ -1,43 +1,43 @@
 ---
-- name: Create combined .env file with secret.env + SA_KEY_FILE(path to yandex certificate file)
-  block:
-      # - debug:
-      #     var: work_dir
-      
-      - name: Ensure required directories exist
-        file:
-          path: "{{ item }}"
-          state: directory
-          mode: '0755'
-        loop:
-          - "{{ docker_build_path }}"
-          - "{{ secret_ops_folder }}"
-      
-      - name: Upload project code (Docker build context) to remote host
-        synchronize:
-          src: "{{ docker_build_path }}/" #/root/project/projects/{app}/{service}
-          dest: "{{ docker_build_path }}" #/root/project/projects/{app}/{service}
-          mode: push
-          recursive: yes
-          rsync_opts:
-            - "--delete"
-        delegate_to: localhost  
 
-      - name: Upload Yandex Certificate SA Key to remote host
-        copy:
-          src: "{{ yc_cert_downloader_sa_key_file }}"
-          dest: "{{ yc_cert_downloader_sa_key_file }}"
-          mode: '0600'
 
-      
-      - name: Create .env file from local secret.env + path to cert inside container_volume_folder
-        copy:
-          dest: "{{ remote_env_file }}"
-          content: |
-            SA_KEY_FILE={{ yc_cert_downloader_sa_key_file }}
-            {{ lookup('file', secret_env_file) }}
-          mode: '0644'
-          force: true
+  # - debug:
+  #     var: work_dir
+  
+- name: Ensure required directories exist
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - "{{ docker_build_path }}"
+    - "{{ secret_ops_folder }}"
+
+- name: Send Docker build context to remote host # {work_dir}/projects/{app}/{service}
+  synchronize:
+    src: "{{ docker_build_path }}/"
+    dest: "{{ docker_build_path }}"
+    mode: push
+    recursive: yes
+    rsync_opts:
+      - "--delete"
+  delegate_to: localhost  
+
+- name: Upload Yandex Certificate SA Key to remote host
+  copy:
+    src: "{{ sa_certificate_key_file }}"
+    dest: "{{ sa_certificate_key_file }}"
+    mode: '0600'
+
+
+- name: Create .env file from local secret.env + path to cert inside container_volume_folder
+  copy:
+    dest: "{{ remote_env_file }}"
+    content: |
+      SA_KEY_FILE={{ sa_certificate_key_file }}
+      {{ lookup('file', secret_env_file) }}
+    mode: '0644'
+    force: true
   
 
 - name: Build + Run Docker container
@@ -58,7 +58,7 @@
       #     var: remote_env_file    
             
       # - debug:
-      #     var: yc_cert_downloader_sa_key_file     
+      #     var: sa_certificate_key_file     
 
 
       - name: Launch/Relaunch Docker container
@@ -72,5 +72,5 @@
             - 80:80
             - 443:443
           volumes:
-            - "{{ container_sa_volume_folder_path }}:{{ container_sa_volume_folder_path }}:ro" # remote vm > remote container
+            - "{{ container_volume_folder }}:{{ container_volume_folder }}:ro" # remote vm > remote container
           recreate: yes

@@ -54,3 +54,5 @@
 **/.sops.yaml.bak
 
 **/*.decrypted~*
+
+**/*__pycache__

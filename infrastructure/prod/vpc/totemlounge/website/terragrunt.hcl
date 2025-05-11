@@ -2,7 +2,6 @@ terraform {
   source = "${get_repo_root()}/modules//yc-ec2/"
 }
 
-
 include "root" {
   path   = find_in_parent_folders("root.hcl")
   expose = true
@@ -26,11 +25,12 @@ dependency "sg" {
 
 dependency "sa_cert_downloader" {
   config_path                             = "../../../../sa_/cert_downloader"
-  mock_outputs_allowed_terraform_commands = ["init", "validate", "plan", "providers", "terragrunt-info", "show"]
-  mock_outputs = {
-    key_path = "secrets/ops/yc_cert_downloader_sa_key.json"
-  }
 }
+
+dependency "sa_compute_viewer" {
+  config_path                             = "../../../../sa_/compute_viewer"
+}
+
 
 locals {
   env          = include.root.locals.env_vars.locals.env

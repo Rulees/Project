@@ -33,6 +33,7 @@ def main():
 
     # Получаем сервисы по заданному фильтру
     matches = find_matching_services(env, app, service)
+    
     if not matches:
         print("⚠️ No matching services found for destroy.")
         sys.exit(0)
@@ -42,9 +43,9 @@ def main():
         print(f" - {build_group_name(m['env'], m['app'], m['service'])}")
 
     # Формируем команду
-    cmd = ["terragrunt", "destroy", "--all", "--non-interactive"]
+    cmd = ["terragrunt", "destroy", "--all", "--non-interactive", "-lock=false", "-auto-approve"]
     if include_dir:
-        cmd += ["--terragrunt-include-dir", include_dir]
+        cmd += ["--queue-include-dir", include_dir]
     cmd += ["--working-dir", str(working_dir)]
 
     print(f"\n💥 Running: {' '.join(cmd)}")
