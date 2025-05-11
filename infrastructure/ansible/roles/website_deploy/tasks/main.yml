@@ -72,5 +72,5 @@
             - 80:80
             - 443:443
           volumes:
-            - "{{ container_volume_folder }}:{{ container_volume_folder }}:ro" # remote vm > remote container
+            - "{{ sa_certificate_key_file }}:{{ sa_certificate_key_file }}:ro" # remote vm > remote container
           recreate: yes

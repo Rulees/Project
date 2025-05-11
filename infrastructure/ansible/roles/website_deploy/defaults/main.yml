@@ -4,4 +4,4 @@ remote_env_file: /tmp/.env
 sa_certificate_key_folder: "{{ secret_ops_folder }}"
 sa_certificate_key_file: "{{ secret_ops_folder }}/yc_cert_downloader_sa_key.json"
 # Path for cert-FOLDER inside container
-container_volume_folder: "{{ secret_ops_folder }}"
+# container_volume_folder: "{{ secret_ops_folder }}"
