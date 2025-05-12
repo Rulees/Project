@@ -1,9 +1,19 @@
 #!/bin/bash
+# Install programms
 set -e
 
 echo "🔐 Проверка зашифрованных файлов в /secrets..."
 
-FILES=$(git diff --name-only origin/main...HEAD | grep '^secrets/' || true)
+if [[ -n "$CI_MERGE_REQUEST_IID" ]]; then
+  echo "📦 MR detected — проверка через GitLab API"
+FILES=$(curl --silent --header "PRIVATE-TOKEN: $GITLAB_API_PROJECT_TOKEN" \
+  "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/merge_requests/${CI_MERGE_REQUEST_IID}/changes" \
+  | jq -r '.changes[].new_path' | grep '^secrets/' || true)
+else
+  echo "📦 Not an MR — проверка через git diff $CI_COMMIT_BEFORE_SHA..$CI_COMMIT_SHA"
+  FILES=$(git diff --name-only "$CI_COMMIT_BEFORE_SHA" "$CI_COMMIT_SHA" | grep '^secrets/' || true)
+fi
+
 has_errors=0
 
 for file in $FILES; do

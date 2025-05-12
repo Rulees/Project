@@ -1,8 +1,9 @@
 stages:
-  - apply_dev
+  - check_secrets
+  - create_dev
   - deploy_dev
   - approval_gate
-  - apply_prod
+  - create_prod
   - deploy_prod
   - destroy
 
@@ -23,63 +24,138 @@ default:
   image: python:3.11
 
 
+# 1
+.install_dependencies:
+  before_script:
+  # Install programms
+    - |
+      if command -v apt &> /dev/null; then
+          apt update && apt install -y make coreutils jq curl sed grep openssh-client ansible git
+      elif command -v apk &> /dev/null; then
+          apk --no-cache add make coreutils jq curl sed grep openssh ansible git
+      else
+          echo "➖➖ Поддерживаемый пакетный менеджер не найден."
+          exit 1; fi
+
+# 2
+.decrypt_secrets:
+  before_script:
+    - make decrypt_secrets
+
+# Other
+.terragrunt_config:
+  before_script:
+    - mkdir -p $TF_PLUGIN_CACHE_DIR
 
 
-apply_dev:
-  stage: apply_dev
-  image: alpine/terragrunt:tf1.9.4
+  # CONFIGURE TERRAFORM TO USE YANDEX MIRROR
+    - |
+      cat <<EOF > ~/.terraformrc
+      provider_installation {
+        network_mirror {
+          url = "https://terraform-mirror.yandexcloud.net/"
+          include = ["registry.terraform.io/*/*"]
+        }
+        direct {
+          exclude = ["registry.terraform.io/*/*"]
+        }
+      }
+      EOF
+
+
+.ansible_config:
+  before_script:
+    - chmod 600 ${WORK_DIR}/secrets/admin/yc_ssh_key
+    - eval $(ssh-agent -s) && ssh-add ${WORK_DIR}/artifacts/ssh-key 
+
+
+
+
+
+check_secrets:
+  stage: check_secrets
+  extends: .install_dependencies
+  script:
+    - make check_secrets
+
+
+create_dev:
+  stage: create_dev
+  variables:
+    SOPS_KEYS: "admin"
+  extends: 
+    - .decrypt_secrets
+    - .terragrunt_config
   script:
     - make apply ENV=dev
+  needs: [check_secrets]
   rules:
-    - if: '$CI_COMMIT_BRANCH'
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
 
 
 
 
 deploy_dev:
   stage: deploy_dev
+  variables:
+    SOPS_KEYS: "admin ops dev"
+  extends: 
+    - .install_dependencies
+    - .decrypt_secrets
   script:
     - make deploy ENV=dev
-  needs: [apply_dev]
+  needs: [create_dev]
   rules:
-    - if: '$CI_COMMIT_BRANCH'
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH
 
 
 
 
 check_approval:
   stage: approval_gate
+  extends: 
+    - .install_dependencies
   script:
-    - ./scripts/ci/check_approval.sh
+    - make check_approval
   needs: [deploy_dev]
   when: manual
   allow_failure: false
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
 
 
 
 
-apply_prod:
-  stage: apply_prod
-  image: alpine/terragrunt:tf1.9.4
+create_prod:
+  stage: create_prod
+  variables:
+    SOPS_KEYS: "admin"
+  extends: 
+    - .decrypt_secrets
+    - .terragrunt_config
   script:
     - make apply ENV=prod
   needs: [check_approval]
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 
 
 
 deploy_prod:
   stage: deploy_prod
+  variables:
+    SOPS_KEYS: "admin ops prod"
+  extends: 
+    - .install_dependencies
+    - .decrypt_secrets
   script:
     - make deploy ENV=prod
-  needs: [apply_prod]
+  needs: [create_prod]
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 
 
@@ -87,20 +163,26 @@ deploy_prod:
 destroy_dev:
   stage: destroy
   image: alpine/terragrunt:tf1.9.4
+  variables:
+    SOPS_KEYS: "admin"
+  extends: .decrypt_secrets
   script:
     - make destroy ENV=dev
   when: manual
   allow_failure: false
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
 
 
 destroy_prod:
   stage: destroy
   image: alpine/terragrunt:tf1.9.4
+  variables:
+    SOPS_KEYS: "admin"
+  extends: .decrypt_secrets
   script:
     - make destroy ENV=prod
   when: manual
   allow_failure: false
   rules:
-    - if: '$CI_COMMIT_BRANCH == "main"'
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

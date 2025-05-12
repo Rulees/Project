@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import subprocess, os, sys, json
+import subprocess, os, sys
 from pathlib import Path
 
 # 🔧 Add the project root and scripts/ci/ to sys.path

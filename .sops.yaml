@@ -45,3 +45,12 @@ creation_rules:
           - age1zewwvsatk3n5je85x2pl70z03a957rk39d2g6gzmg49ejw7q6p0qy0a22k
         kms:
           - arn: arn:aws:kms:eu-north-1:590184089880:key/8b991131-2f94-4ab9-9d17-859a7f4d15b3
+
+#   Script
+  - path_regex: ^scripts/send_vars_to_gitlab.sh
+    encrypted_regex: '.*'
+    key_groups:
+      - age:
+          - age1sgrucltyqyjnvvqlz5rmkn72gyt90xadggeedrxeh2yrg92epewsh3gypt
+        kms:
+          - arn: arn:aws:kms:eu-north-1:590184089880:key/8b991131-2f94-4ab9-9d17-859a7f4d15b3

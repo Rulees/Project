@@ -9,7 +9,7 @@ RETRY_DELAY=30  # Задержка между попытками в секунд
 # VARIABLES_FROM_GITLAB_PROJECT
 APPROVERS_ARRAY=(${APPROVERS//,/ })
 INFRA_APPROVERS_ARRAY=(${INFRA_APPROVERS//,/ })
-GITLAB_TOKEN="${GITLAB_API_BOT}"
+GITLAB_TOKEN="${GITLAB_API_PROJECT_TOKEN}"
 
 # === Predefined GitLab pipeline variables ===
 API_URL="${CI_API_V4_URL}"
@@ -31,7 +31,10 @@ fi
 MR_ID=$(echo "$MR_INFO" | jq '.iid')
 
 # === Проверка изменённых файлов ===
-CHANGED_FILES=$(git diff --name-only origin/main...HEAD)
+CHANGED_FILES=$(curl --silent --header "PRIVATE-TOKEN: $GITLAB_TOKEN" \
+  "${API_URL}/projects/${PROJECT_ID}/merge_requests/${MR_ID}/changes" \
+  | jq -r '.changes[].new_path')
+
 IS_RESTRICTED_CHANGE=false
 
 for file in $CHANGED_FILES; do
