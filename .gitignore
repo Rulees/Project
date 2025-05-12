@@ -56,3 +56,5 @@
 **/*.decrypted~*
 
 **/*__pycache__
+
+**/changed_services.json

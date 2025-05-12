@@ -8,11 +8,14 @@ def find_project_root(marker="makefile"):
         if (current / marker).exists():
             return current
         current = current.parent
-    raise FileNotFoundError("Can't find project root")
+    raise FileNotFoundError("❌ Can't find project root")
 
 def find_matching_services(env=None, app=None, service=None):
-    base = find_project_root() / "infrastructure"
-    envs = [env] if env else ["dev", "prod"]
+    root = find_project_root()
+    base = root / "infrastructure"
+
+    # 📂 Получаем список доступных окружений
+    envs = [env] if env else [d.name for d in base.iterdir() if d.is_dir()]
     matched = []
 
     for e in envs:
@@ -34,15 +37,14 @@ def find_matching_services(env=None, app=None, service=None):
                 tf_hcl = service_path / "terragrunt.hcl"
                 playbook = service_path / "playbook.yml"
 
-                if tf_hcl.exists() or playbook.exists():
-                    matched.append({
-                        "env": e,
-                        "app": a,
-                        "service": s,
-                        "path": service_path,
-                        "has_tf": tf_hcl.exists(),
-                        "has_ansible": playbook.exists()
-                    })
+                matched.append({
+                    "env": e,
+                    "app": a,
+                    "service": s,
+                    "path": service_path,
+                    "has_tf": tf_hcl.exists(),
+                    "has_ansible": playbook.exists()
+                })
 
     return matched
 

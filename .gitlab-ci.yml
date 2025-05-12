@@ -1,5 +1,4 @@
 stages:
-  - detect
   - apply_dev
   - deploy_dev
   - approval_gate
@@ -26,28 +25,11 @@ default:
 
 
 
-detect:
-  stage: detect
-  script:
-    - pip install -r requirements.txt || true
-    - make detect
-  artifacts:
-    paths: [changed_services.json]
-    expire_in: 1 hour
-  rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_COMMIT_BRANCH'
-    - when: always
-
-
-
-
 apply_dev:
   stage: apply_dev
   image: alpine/terragrunt:tf1.9.4
   script:
-    - make apply changed_services.json ENV=dev
-  needs: [detect]
+    - make apply ENV=dev
   rules:
     - if: '$CI_COMMIT_BRANCH'
 
@@ -57,7 +39,7 @@ apply_dev:
 deploy_dev:
   stage: deploy_dev
   script:
-    - make deploy changed_services.json ENV=dev
+    - make deploy ENV=dev
   needs: [apply_dev]
   rules:
     - if: '$CI_COMMIT_BRANCH'
@@ -83,7 +65,7 @@ apply_prod:
   stage: apply_prod
   image: alpine/terragrunt:tf1.9.4
   script:
-    - make apply changed_services.json ENV=prod
+    - make apply ENV=prod
   needs: [check_approval]
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
@@ -94,7 +76,7 @@ apply_prod:
 deploy_prod:
   stage: deploy_prod
   script:
-    - make deploy changed_services.json ENV=prod
+    - make deploy ENV=prod
   needs: [apply_prod]
   rules:
     - if: '$CI_COMMIT_BRANCH == "main"'
@@ -102,11 +84,21 @@ deploy_prod:
 
 
 
-destroy:
+destroy_dev:
   stage: destroy
   image: alpine/terragrunt:tf1.9.4
   script:
     - make destroy ENV=dev
+  when: manual
+  allow_failure: false
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+
+destroy_prod:
+  stage: destroy
+  image: alpine/terragrunt:tf1.9.4
+  script:
     - make destroy ENV=prod
   when: manual
   allow_failure: false

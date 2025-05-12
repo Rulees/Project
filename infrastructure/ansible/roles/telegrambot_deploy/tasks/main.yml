@@ -1,4 +1,10 @@
-# ---
+---
+- debug:
+    var: work_dir
+
+- debug:
+    msg: "Success!" 
+
 # - name: Pull repository code
 #   block:
 #       - name: Copy private-ssh-key from local to server for pulling repository 
