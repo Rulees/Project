@@ -1,6 +1,0 @@
----
-- name: Deploy telegrambot
-  hosts: all
-  become: true
-  roles:
-    - telegrambot_deploy
